@@ -5,9 +5,11 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const http = require('http');
 require('dotenv').config();
+const { connectToMongoDB  } = require('./db/db.js');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var osRouter = require('./routes/os');
 
 var app = express();
 
@@ -20,6 +22,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/os', osRouter);
+
+// app.use(cors({
+//   origin: 'http://localhost:3000',
+//   methods: 'GET, POST, PUT, DELETE',
+//   allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Credentials',
+//   credentials: true
+// }));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -38,4 +48,4 @@ app.use(function(err, req, res, next) {
 });
 
 const server=http.createServer(app);
-server.listen(5000,()=>{console.log("app is running on port 5000")});
+server.listen(5000,()=>{connectToMongoDB();console.log("app is running on port 5000")});
