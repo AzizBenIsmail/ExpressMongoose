@@ -1,33 +1,27 @@
 var express = require('express');
 var router = express.Router();
-const userModel = require('../models/userSchema');
+const auth = require("../controllers/authController")
+const upload = require("../middlewares/uploadFile")
 
-router.get('/', async function(req, res, next) {
-  try {
-       const userList = await userModel.find();
-      if(!userList)
-      {
-        throw new Error('User not found');
-      }
-      console.log(userList);
-      res.status(200).json(userList);
-  }catch(err) {
-    res.status(500).json({message: err.message});
-  }
-});
+router.get('/',auth.getUsers );
 
-router.post('/', async function(req, res, next) {
-  try {    
-    console.log(req.body);
-    const {nom , prenom , age , address} = req.body;
-    const user= new userModel({
-      nom , prenom , age , address
-    })
-    const usersadded = await user.save();
-      res.status(200).json(usersadded);
-  }catch(err) {
-    res.status(500).json({message: err.message});
-  }
-});
+router.get('/searchUsersByName',auth.searchUsersByName );  //searchUsersByName?data=aziz
+
+router.get('/getUsersSortByAge',auth.getUsersSortByAge ); 
+
+router.get('/getUsersSortByAgeDesc',auth.getUsersSortByAgeDesc ); 
+
+router.get('/:id',auth.getUserByID );
+
+router.post('/',auth.addUser );
+
+router.post('/addClient',upload.single("image_user"),auth.addClient );
+
+router.delete('/:id',auth.deleteUser );
+
+router.put('/:id',auth.updateUser );
+
+
+
 
 module.exports = router;
