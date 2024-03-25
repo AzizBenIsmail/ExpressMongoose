@@ -1,12 +1,70 @@
 const userModel = require("../models/userSchema");
+const jwt = require("jsonwebtoken");
 
+const maxAge = 2 * 60 * 60 //7200 seconds  // 2 * 60 = 2 minutes
+
+const creatToken = (id) => {
+  return jwt.sign({id},'net Formation secret',{expiresIn: maxAge});
+}
+
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ODg5OWI0ZDViODAzM2UxY2M
+//1MTNiMyIsImlhdCI6MTY4Njc1MzQ4NCwiZXhwIjoxNjg2NzYwNjg0fQ
+//.KPnsNPjL0PS3oyZ5l3mMC9GUc0ymgheVr-FYt_31pN0
+
+// const creatTokenMdp = (id) => {
+//   return jwt.sign({id, exp: Math.floor(Date.now() / 1000) + 120 },'net Formation secret');
+// }
+
+module.exports.signupclient = async (req,res) => {
+  const {email ,password,name}=req.body;
+  const role ='client'
+  try{
+    const user = await userModel.create({ email,password,role,nom : name })
+    const token =creatToken(user._id);
+    res.cookie('jwt_token', token , {httpOnly : true ,maxAge : maxAge * 1000} )
+    res.status(201).json({user})
+  }catch(err){
+   res.status(500).json({message: err.message})
+  }
+}
+
+module.exports.logout = async (req,res) => {
+  try {
+    res.cookie('jwt_token', '', { httpOnly: false, maxAge: 1 });
+    req.session.destroy();
+    res.status(200).json({
+      message: 'User successfully logged out',
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  } 
+}
+module.exports.login = async (req,res) => {
+  const {email ,password}=req.body;
+  //console.log(req.body)
+  try{
+    if(!email) {
+      return res.status(200).json({message : 'Email not found'})
+    }
+    const user = await userModel.login( email,password)
+    
+    const token =creatToken(user._id);
+    res.cookie('jwt_token', token , {httpOnly : true ,maxAge : maxAge * 1000} )
+    res.status(201).json({
+      message: 'User successfully authenticated', user: user,
+    })
+  }catch(err){
+   res.status(500).json({message: err.message})
+  }
+}
 module.exports.getUsers = async (req, res, next) => {
   try {
+    //console.log(req.session.user);
     const userList = await userModel.find().populate('cars');
-    if (!userList) {
-      throw new Error("User not found");
-    }
-    console.log(userList);
+    // if (!userList) {
+    //   throw new Error("User not found");
+    // }
+    //console.log(userList);
     res.status(200).json(userList);
   } catch (err) {
     res.status(500).json({ message: err.message });
